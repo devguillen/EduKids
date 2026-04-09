@@ -1,81 +1,146 @@
 import { useState } from 'react';
 
-export const Wizard = ({ onComplete }) => {
-  const [step, setStep] = useState(1);
-  const [age, setAge] = useState(7);
-  const [subject, setSubject] = useState('');
-  const [topic, setTopic] = useState('');
+const MATERIAS_DISPONIVEIS = ['Matemática', 'Português', 'Ciências', 'Geografia'];
 
-  const subjects = ['Matemática', 'Português', 'Ciências'];
-  // Subtopics based on subject
-  const getTopics = () => {
-    if (subject === 'Matemática') return ['Adição Visual', 'Subtração', 'Formas Geométricas'];
-    if (subject === 'Português') return ['Vírgulas', 'Montar Frases', 'Sons das Letras'];
-    if (subject === 'Ciências') return ['Animais', 'Corpo Humano', 'Plantas'];
-    return [];
+const TOPICOS_POR_MATERIA = {
+  'Matemática': ['Adição', 'Subtração', 'Geometria', 'Lógica'],
+  'Português': ['Alfabeto', 'Formar Palavras', 'Vírgula', 'Acentos'],
+  'Ciências': ['Animais', 'Plantas', 'Corpo Humano', 'Universo'],
+  'Geografia': ['Cidades', 'Mapas', 'Clima', 'Planetas'],
+};
+
+export const Wizard = ({ onComplete }) => {
+  // Passos: 0 (Idade) -> 1 (Matérias) -> 2 (Tópicos Loop)
+  const [step, setStep] = useState(0);
+
+  const [age, setAge] = useState(null);
+  const [selectedSubjects, setSelectedSubjects] = useState([]);
+  
+  // Ex: { 'Matemática': ['Adição', 'Subtração'], 'Ciências': ['Animais'] }
+  const [selectedTopics, setSelectedTopics] = useState({});
+  const [currentSubjectIndexForTopicSelection, setCurrentSubjectIndexForTopicSelection] = useState(0);
+
+  const toggleSubject = (subject) => {
+    if (selectedSubjects.includes(subject)) {
+      setSelectedSubjects(selectedSubjects.filter(s => s !== subject));
+    } else {
+      setSelectedSubjects([...selectedSubjects, subject]);
+    }
   };
 
-  const nextStep = () => setStep(step + 1);
+  const toggleTopic = (subject, topic) => {
+    const currentList = selectedTopics[subject] || [];
+    let newList;
+    if (currentList.includes(topic)) {
+      newList = currentList.filter(t => t !== topic);
+    } else {
+      newList = [...currentList, topic];
+    }
+    setSelectedTopics({ ...selectedTopics, [subject]: newList });
+  };
 
-  if (step === 1) {
+  const advanceTopicsStep = () => {
+    const currentSubject = selectedSubjects[currentSubjectIndexForTopicSelection];
+    // Se não marcou nada nesta matéria específica, ignora o warning por enquanto e avança
+    // Mas o ideal é bloquear.
+    const chosenTopics = selectedTopics[currentSubject] || [];
+    if (chosenTopics.length === 0) return; // Disables the button 
+
+    if (currentSubjectIndexForTopicSelection + 1 < selectedSubjects.length) {
+      setCurrentSubjectIndexForTopicSelection(currentSubjectIndexForTopicSelection + 1);
+    } else {
+      // Finished all! 
+      onComplete({
+        age,
+        subjectsAndTopics: selectedTopics // Dict of selected content
+      });
+    }
+  };
+
+  if (step === 0) {
     return (
-      <div className="wizard-card">
-        <h2>Olá! Quantos anos você tem?</h2>
-        <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '30px' }}>
+      <div className="wizard-container">
+        <h2 className="wizard-title">Quantos anos você tem?</h2>
+        <div className="options-grid">
           {[4,5,6,7,8,9,10,11,12].map(num => (
             <button 
               key={num} 
-              className={`choice-button ${age === num ? 'selected' : ''}`}
+              className="option-card"
+              data-selected={age === num}
               onClick={() => setAge(num)}
             >
-              {num}
+              <span style={{fontSize: '2em'}}>{num}</span>
             </button>
           ))}
         </div>
-        <button className="primary-btn" style={{marginTop: '40px'}} onClick={nextStep}>Pronto! 🚀</button>
+        <div className="action-line">
+          <button className="btn-primary" disabled={!age} onClick={() => setStep(1)}>
+            AVANÇAR
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div className="wizard-container">
+        <h2 className="wizard-title">O que vamos estudar hoje?</h2>
+        <p style={{color: 'var(--text-muted)'}}>Pode escolher mais de um!</p>
+        <div className="options-grid">
+          {MATERIAS_DISPONIVEIS.map(mat => {
+            const isSelected = selectedSubjects.includes(mat);
+            return (
+              <button 
+                key={mat} 
+                className="option-card"
+                data-selected={isSelected}
+                onClick={() => toggleSubject(mat)}
+              >
+                {mat}
+              </button>
+            );
+          })}
+        </div>
+        <div className="action-line">
+          <button className="btn-primary" disabled={selectedSubjects.length === 0} onClick={() => setStep(2)}>
+            AVANÇAR
+          </button>
+        </div>
       </div>
     );
   }
 
   if (step === 2) {
-    return (
-      <div className="wizard-card">
-        <h2>O que vamos aprender hoje?</h2>
-        <div className="grid-options">
-          {subjects.map(s => (
-            <button 
-              key={s} 
-              className={`big-choice-button ${subject === s ? 'selected' : ''}`}
-              onClick={() => { setSubject(s); nextStep(); }}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-        <button className="secondary-btn" style={{marginTop: '20px'}} onClick={() => setStep(1)}>Voltar</button>
-      </div>
-    );
-  }
+    const subject = selectedSubjects[currentSubjectIndexForTopicSelection];
+    const availableTopics = TOPICOS_POR_MATERIA[subject] || [];
+    const chosenTopics = selectedTopics[subject] || [];
 
-  if (step === 3) {
     return (
-      <div className="wizard-card">
-        <h2>Legal! Escolha um desafio de {subject}:</h2>
-        <div className="grid-options">
-          {getTopics().map(t => (
-            <button 
-              key={t} 
-              className={`big-choice-button`}
-              onClick={() => {
-                setTopic(t);
-                onComplete({ age, subject, topic: t });
-              }}
-            >
-              {t}
-            </button>
-          ))}
+      <div className="wizard-container">
+        <h2 className="wizard-title">O que de {subject} você quer ver?</h2>
+        <p style={{color: 'var(--text-muted)'}}>Selecione os temas desejados e avance.</p>
+        <div className="options-grid">
+           {availableTopics.map(t => (
+             <button 
+                key={t}
+                className="option-card"
+                data-selected={chosenTopics.includes(t)}
+                onClick={() => toggleTopic(subject, t)}
+             >
+               {t}
+             </button>
+           ))}
         </div>
-        <button className="secondary-btn" style={{marginTop: '20px'}} onClick={() => setStep(2)}>Voltar</button>
+        <div className="action-line">
+           <button 
+             className="btn-primary" 
+             disabled={chosenTopics.length === 0} 
+             onClick={advanceTopicsStep}
+           >
+             {currentSubjectIndexForTopicSelection + 1 === selectedSubjects.length ? "COMEÇAR JOGO!" : "PRÓXIMA MATÉRIA"}
+           </button>
+        </div>
       </div>
     );
   }

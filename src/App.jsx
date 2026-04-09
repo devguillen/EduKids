@@ -14,51 +14,100 @@ export default function App() {
   const [highContrast, setHighContrast] = useState(false);
   const [largeText, setLargeText] = useState(false);
   
-  // Game State
   const [showWizard, setShowWizard] = useState(true);
-  const [profile, setProfile] = useState(null);
+  const [age, setAge] = useState(null);
+  
+  // Array linearizado do que precisa ser estudado. 
+  // Ex: [ {subject: 'Math', topic: 'Adição'}, {subject: 'Português', topic: 'Vírgula'} ]
+  const [studyQueue, setStudyQueue] = useState([]);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
+
   const [levelData, setLevelData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Atencionando DOM p/ CSS
   useEffect(() => {
-    document.body.className = '';
-    if (highContrast) document.body.classList.add('sensory-high-contrast');
-    if (largeText) document.body.classList.add('sensory-large-text');
+    const root = document.documentElement;
+    if (highContrast) {
+      root.setAttribute('data-theme', 'high-contrast');
+    } else {
+      root.removeAttribute('data-theme');
+    }
+
+    if (largeText) {
+      root.setAttribute('data-text', 'large');
+    } else {
+      root.removeAttribute('data-text');
+    }
   }, [highContrast, largeText]);
 
-  // Dispara quando a criança acaba as escolhas 1, 2 e 3
   const handleWizardComplete = async (wizardData) => {
-    setProfile(wizardData);
+    // Transforma o dicionário aninhado em uma fila plana sequencial
+    const queue = [];
+    Object.keys(wizardData.subjectsAndTopics).forEach(subject => {
+       wizardData.subjectsAndTopics[subject].forEach(topic => {
+          queue.push({ subject, topic });
+       });
+    });
+
+    setAge(wizardData.age);
+    setStudyQueue(queue);
+    setCurrentQueueIndex(0);
     setShowWizard(false);
-    await loadNewGameLevel(wizardData);
+
+    // Carrega o primeiro level
+    if (queue.length > 0) {
+      await composeNextLevel(wizardData.age, queue[0]);
+    }
   };
 
-  const loadNewGameLevel = async (currentProfile) => {
+  const composeNextLevel = async (studentAge, queueItem) => {
     setIsLoading(true);
     setErrorMsg('');
     setLevelData(null);
 
-    const result = await neuroTutor.generateMiniGame(currentProfile);
+    const result = await neuroTutor.generateMiniGame({
+      age: studentAge,
+      subject: queueItem.subject,
+      topic: queueItem.topic
+    });
 
     if (result.success && result.gameLevel) {
-      // Misturando (shuffle) as opções devolvidas pela IA para a resposta certa não ficar óbvia
+      // Embaralha as respostas para n viciar
       const shuffledOptions = [...result.gameLevel.options].sort(() => Math.random() - 0.5);
       setLevelData({
         ...result.gameLevel,
-        options: shuffledOptions
+        options: shuffledOptions,
+        subjectContext: queueItem.subject
       });
     } else {
-      setErrorMsg(result.error || 'Erro desconhecido');
+      setErrorMsg(result.error || 'Erro ao comunicar com a IA');
     }
     
     setIsLoading(false);
   };
 
+  const handleLevelCompleted = async () => {
+    // Move na fila
+    const nextIndex = currentQueueIndex + 1;
+    if (nextIndex < studyQueue.length) {
+       setCurrentQueueIndex(nextIndex);
+       await composeNextLevel(age, studyQueue[nextIndex]);
+    } else {
+       // Loop do jogo acabou, se ele selecionou só 1 tópico de 1 matéria (ou vários e acabou).
+       // Volta The Wizard ou mostra tela final
+       alert('Você completou todos os tópicos que selecionou! 🎉');
+       setShowWizard(true);
+    }
+  };
+
   return (
-    <div className="app-container">
-      <header>
-        <h1 style={{cursor: 'pointer'}} onClick={() => setShowWizard(true)}>🎮 EduKids IA</h1>
+    <div className="app-wrapper">
+      <header className="top-navbar">
+        <h1 className="logo-title" onClick={() => setShowWizard(true)} style={{cursor:'pointer'}}>
+          EduKids AI
+        </h1>
         <SensoryControls 
           onToggleContrast={() => setHighContrast(!highContrast)}
           onToggleTextSize={() => setLargeText(!largeText)}
@@ -67,28 +116,31 @@ export default function App() {
         />
       </header>
       
-      <main className="game-main-area">
+      <main className="main-content">
         {showWizard ? (
           <Wizard onComplete={handleWizardComplete} />
         ) : (
           <div className="game-play-area">
             {isLoading && (
-              <div className="screen-center">
-                <div className="loading-spinner">✨ Preparando o seu jogo... ✨</div>
+              <div className="loading-box">
+                <div>Carregando a próxima etapa...</div>
+                <div>✨ ✨ ✨</div>
               </div>
             )}
             
             {errorMsg && !isLoading && (
-              <div className="error-box">
-                <p>Oops! {errorMsg}</p>
-                <button className="primary-btn" onClick={() => loadNewGameLevel(profile)}>Tentar de novo!</button>
+              <div style={{textAlign: 'center', marginTop: '50px'}}>
+                <h2 style={{color: 'red', marginBottom: '20px'}}>Puxa! {errorMsg}</h2>
+                <button className="btn-primary" onClick={() => composeNextLevel(age, studyQueue[currentQueueIndex])}>
+                  Tentar novamente
+                </button>
               </div>
             )}
 
             {!isLoading && !errorMsg && levelData && (
                <GameUI 
                  levelData={levelData} 
-                 onNextLevel={() => loadNewGameLevel(profile)} 
+                 onNextLevel={handleLevelCompleted} 
                />
             )}
           </div>

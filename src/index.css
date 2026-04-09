@@ -1,49 +1,43 @@
-/* =========================================================================
-   CALM TECH DESIGN SYSTEM
-   Foco em pessoas no Espectro Autista. Baixo estímulo visual, alto contraste.
-   ========================================================================= */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&display=swap');
 
 :root {
-  /* Paleta Suave Padrão */
-  --bg-color: #f7f9fc;
+  /* Duolingo-like Palette */
+  --bg-color: #ffffff;
   --surface-color: #ffffff;
-  --text-primary: #334155;
-  --text-secondary: #64748b;
   
-  --bubble-ai: #e2e8f0;    /* Cinza Azulado para Tutor */
-  --bubble-user: #dbeafe;  /* Azul Calmo para Aluno */
+  --primary-color: #58cc02;
+  --primary-shadow: #58a700;
+  --primary-hover: #61e002;
   
-  --action-primary: #3b82f6;
-  --action-hover: #2563eb;
-  --action-disabled: #cbd5e1;
-  --focus-ring: #bfdbfe;
+  --secondary-color: #1cb0f6;
+  --secondary-shadow: #1899d6;
+  --secondary-hover: #14bfff;
   
-  --border-radius: 12px;
-  --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-
-  --font-family: 'Inter', system-ui, sans-serif;
-  --base-size: 16px;
-  --transition-speed: 0.2s; /* Rápido, previsível, sem delay exagerado */
+  --text-main: #4b4b4b;
+  --text-muted: #afafaf;
+  --border-color: #e5e5e5;
+  
+  --font-family: 'Nunito', sans-serif;
+  --font-size: 18px; /* Default very readable */
 }
 
-/* Modo Alto Contraste para Auxílio Visual / Foco */
-body.sensory-high-contrast {
+/* HIGH CONTRAST THEME (Data Attribute Driven) */
+[data-theme="high-contrast"] {
   --bg-color: #121212;
-  --surface-color: #1e1e1e;
-  --text-primary: #ffffff;
-  --text-secondary: #e0e0e0;
+  --surface-color: #212121;
+  --text-main: #ffffff;
+  --text-muted: #aaaaaa;
+  --border-color: #424242;
   
-  --bubble-ai: #2d3748;
-  --bubble-user: #2b6cb0;
+  --primary-color: #2e7d32;
+  --primary-shadow: #1b5e20;
   
-  --border-color: #4a5568;
+  --secondary-color: #1565c0;
+  --secondary-shadow: #0d47a1;
 }
 
-/* Modo Texto Grande para Redução de Tensão Ocular */
-body.sensory-large-text {
-  --base-size: 20px;
+[data-text="large"] {
+  --font-size: 24px;
 }
 
 * {
@@ -54,27 +48,29 @@ body.sensory-large-text {
 
 body {
   font-family: var(--font-family);
-  font-size: var(--base-size);
+  font-size: var(--font-size);
   background-color: var(--bg-color);
-  color: var(--text-primary);
-  line-height: 1.6;
-  transition: background-color var(--transition-speed) ease;
+  color: var(--text-main);
+  transition: all 0.3s ease;
+  overflow-x: hidden;
 }
 
+/* Beautiful Universal Buttons Base */
 button {
   font-family: inherit;
   cursor: pointer;
   border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all var(--transition-speed) ease;
+  border-radius: 16px;
+  font-weight: 800;
+  transition: transform 0.1s;
+}
+
+button:active {
+  transform: translateY(4px);
+  box-shadow: none !important;
 }
 
 button:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-input {
-  font-family: inherit;
+  outline: 4px solid var(--secondary-hover);
+  outline-offset: 4px;
 }
