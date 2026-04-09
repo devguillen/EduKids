@@ -1,0 +1,175 @@
+/* =========================================================================
+   APP SCOPED STYLES (GAME EDITION)
+   ========================================================================= */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0 auto;
+  max-width: 900px;
+  padding: 24px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--bubble-ai);
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.game-main-area {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+/* WIZARD CARD & GAME CARD */
+.wizard-card, .game-card {
+  width: 100%;
+  max-width: 700px;
+  background-color: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  padding: 40px;
+  text-align: center;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.wizard-card h2, .game-question {
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin-bottom: 30px;
+}
+
+/* BUTTONS */
+.choice-button {
+  width: 60px;
+  height: 60px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  border-radius: 50%;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  border: 3px solid var(--bubble-ai);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.choice-button:hover { background: var(--bubble-user); }
+.choice-button.selected {
+  background: var(--action-primary);
+  color: white;
+  border-color: var(--action-primary);
+  transform: scale(1.1);
+}
+
+.grid-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.big-choice-button {
+  padding: 20px;
+  font-size: 1.2rem;
+  border-radius: 16px;
+  background: var(--bg-color);
+  border: 4px solid var(--bubble-ai);
+  color: var(--text-primary);
+}
+
+.big-choice-button:hover {
+  background: var(--bubble-user);
+  border-color: var(--action-hover);
+}
+
+.primary-btn {
+  background: var(--action-primary);
+  color: white;
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  border-radius: 12px;
+}
+.primary-btn:hover { background: var(--action-hover); }
+
+.secondary-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--text-secondary);
+  padding: 10px 20px;
+}
+
+/* GAME UI SPECIFICS */
+.game-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-btn {
+  padding: 18px;
+  font-size: 1.1rem;
+  background-color: var(--bg-color);
+  border: 3px solid var(--bubble-user);
+  border-radius: 12px;
+  color: var(--text-primary);
+  text-align: left;
+}
+.game-btn:hover:not(:disabled) {
+  background-color: var(--bubble-user);
+  transform: translateX(4px);
+}
+.game-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wrong-shake {
+  animation: shake 0.4s;
+  border-color: #ef4444; /* Vermelho suave pra erro */
+  background-color: #fee2e2;
+}
+
+.hint-box {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #fffbeb; /* Amarelo suave dica */
+  border-radius: 8px;
+  border-left: 4px solid #fbbf24;
+  text-align: left;
+  color: #92400e;
+}
+
+.victory-card { background-color: #f0fdf4; border: 2px solid #bbf7d0; }
+.victory-text { font-size: 1.2em; color: #166534; margin-bottom: 24px; }
+.pulse { animation: pulse 2s infinite; }
+
+.screen-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+.loading-spinner {
+  font-size: 1.5rem;
+  animation: pulse 1.5s infinite;
+  color: var(--action-primary);
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
