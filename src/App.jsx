@@ -153,30 +153,37 @@ export default function App() {
   };
 
   const handleLevelCompleted = async () => {
-    // Move na fila
-    const nextIndex = currentQueueIndex + 1;
-    if (nextIndex < studyQueue.length) {
-       setCurrentQueueIndex(nextIndex);
-       
-       // Atualiza a persistência com o novo índice
-       const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEY_USER) || '{}');
-       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
-         ...savedUser,
-         currentQueueIndex: nextIndex,
-         stats: stats // Salva as stats atuais no refresh
-       }));
+    // Gera nova questão no mesmo tópico -- loop infinito de aprendizado
+    await composeNextLevel({
+      childName,
+      isNeurodivergent,
+      age,
+      subject: studyQueue[currentQueueIndex].subject,
+      topic: studyQueue[currentQueueIndex].topic
+    });
+  };
 
-       await composeNextLevel({
-         childName,
-         isNeurodivergent,
-         age,
-         subject: studyQueue[nextIndex].subject,
-         topic: studyQueue[nextIndex].topic
-       });
-    } else {
-       // Loop do jogo acabou
-       setShowResults(true);
-    }
+  const handleSwitchSubject = async () => {
+    if (studyQueue.length <= 1) return; // Só tem 1 matéria
+    
+    const nextIndex = (currentQueueIndex + 1) % studyQueue.length;
+    setCurrentQueueIndex(nextIndex);
+    
+    // Atualiza a persistência
+    const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEY_USER) || '{}');
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
+      ...savedUser,
+      currentQueueIndex: nextIndex,
+      stats: stats
+    }));
+
+    await composeNextLevel({
+      childName,
+      isNeurodivergent,
+      age,
+      subject: studyQueue[nextIndex].subject,
+      topic: studyQueue[nextIndex].topic
+    });
   };
 
   const updateStats = (isCorrect) => {
@@ -206,15 +213,31 @@ export default function App() {
         <h1 className="logo-title" onClick={() => !showWizard && setShowResults(true)} style={{cursor:'pointer'}}>
           EduKids AI
         </h1>
-        <div className="stats-indicator">
-          ⭐ {stats.correct} Acertos
+        <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+          <div className="stats-indicator">
+            ⭐ {stats.correct} Acertos
+          </div>
+          {!showWizard && studyQueue.length > 1 && (
+            <button 
+              className="btn-primary" 
+              style={{padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#6c63ff'}}
+              onClick={handleSwitchSubject}
+            >
+              🔄 Trocar Matéria
+            </button>
+          )}
+          {!showWizard && studyQueue.length > 0 && (
+            <span style={{fontSize: '0.8em', color: '#aaa'}}>
+              📚 {studyQueue[currentQueueIndex]?.subject} — {studyQueue[currentQueueIndex]?.topic}
+            </span>
+          )}
+          <SensoryControls 
+            onToggleContrast={() => setHighContrast(!highContrast)}
+            onToggleTextSize={() => setLargeText(!largeText)}
+            highContrast={highContrast}
+            largeText={largeText}
+          />
         </div>
-        <SensoryControls 
-          onToggleContrast={() => setHighContrast(!highContrast)}
-          onToggleTextSize={() => setLargeText(!largeText)}
-          highContrast={highContrast}
-          largeText={largeText}
-        />
       </header>
       
       <main className="main-content">
