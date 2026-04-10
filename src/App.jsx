@@ -3,7 +3,7 @@ import { Wizard } from './components/Wizard';
 import { GameUI } from './components/GameUI';
 import { SensoryControls } from './components/SensoryControls';
 import { NeuroAITutor } from './core/NeuroAITutor';
-import { GeminiProvider } from './services/GeminiProvider';
+import { GeminiProvider, resetUsedQuestions } from './services/GeminiProvider';
 import './App.css';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -138,7 +138,30 @@ export default function App() {
     const result = await neuroTutor.generateMiniGame(profile);
 
     if (result.success && result.gameLevel) {
-      // Embaralha as respostas para n viciar
+      // Verifica se o tópico esgotou todas as perguntas
+      if (result.gameLevel._topicCompleted) {
+        // Tópico concluído! Avança para o próximo automaticamente
+        const nextIndex = (currentQueueIndex + 1) % studyQueue.length;
+        
+        // Se já deu a volta completa, mostra resultados
+        if (nextIndex === currentQueueIndex || studyQueue.length <= 1) {
+          setShowResults(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        setCurrentQueueIndex(nextIndex);
+        await composeNextLevel({
+          childName: profile.childName,
+          isNeurodivergent: profile.isNeurodivergent,
+          age: profile.age,
+          subject: studyQueue[nextIndex].subject,
+          topic: studyQueue[nextIndex].topic
+        });
+        return;
+      }
+
+      // Embaralha as respostas para não viciar
       const shuffledOptions = [...result.gameLevel.options].sort(() => Math.random() - 0.5);
       setLevelData({
         ...result.gameLevel,
@@ -153,19 +176,7 @@ export default function App() {
   };
 
   const handleLevelCompleted = async () => {
-    // Gera nova questão no mesmo tópico -- loop infinito de aprendizado
-    await composeNextLevel({
-      childName,
-      isNeurodivergent,
-      age,
-      subject: studyQueue[currentQueueIndex].subject,
-      topic: studyQueue[currentQueueIndex].topic
-    });
-  };
-
-  const handleSwitchSubject = async () => {
-    if (studyQueue.length <= 1) return; // Só tem 1 matéria
-    
+    // Avança para o próximo tópico na fila (round-robin)
     const nextIndex = (currentQueueIndex + 1) % studyQueue.length;
     setCurrentQueueIndex(nextIndex);
     
@@ -184,6 +195,16 @@ export default function App() {
       subject: studyQueue[nextIndex].subject,
       topic: studyQueue[nextIndex].topic
     });
+  };
+
+  const handleSwitchSubject = () => {
+    // Reseta o banco de perguntas usadas para a nova sessão
+    resetUsedQuestions();
+    // Volta ao Wizard na tela de matérias (preservando perfil)
+    setShowWizard(true);
+    setShowResults(false);
+    setLevelData(null);
+    setErrorMsg('');
   };
 
   const updateStats = (isCorrect) => {
@@ -210,14 +231,14 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <header className="top-navbar">
-        <h1 className="logo-title" onClick={() => !showWizard && setShowResults(true)} style={{cursor:'pointer'}}>
+        <h1 className="logo-title" style={{cursor:'pointer'}}>
           EduKids AI
         </h1>
         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
           <div className="stats-indicator">
             ⭐ {stats.correct} Acertos
           </div>
-          {!showWizard && studyQueue.length > 1 && (
+          {!showWizard && (
             <button 
               className="btn-primary" 
               style={{padding: '6px 12px', fontSize: '0.8em', backgroundColor: '#6c63ff'}}
@@ -248,7 +269,10 @@ export default function App() {
         )}
 
         {showWizard ? (
-          <Wizard onComplete={handleWizardComplete} />
+          <Wizard 
+            onComplete={handleWizardComplete} 
+            initialProfile={childName ? { childName, isNeurodivergent, age } : null}
+          />
         ) : (
           <div className="game-play-area">
             {isLoading && (

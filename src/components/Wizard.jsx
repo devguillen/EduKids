@@ -9,13 +9,16 @@ const TOPICOS_POR_MATERIA = {
   'Geografia': ['Cidades', 'Mapas', 'Clima', 'Planetas'],
 };
 
-export const Wizard = ({ onComplete }) => {
-  // Passos: 0 (Nome) -> 1 (Perfil) -> 2 (Idade) -> 3 (Matérias) -> 4 (Tópicos Loop)
-  const [step, setStep] = useState(0);
+export const Wizard = ({ onComplete, initialProfile }) => {
+  // Se já temos um perfil (veio do 'Trocar Matéria'), pula direto pra matéria
+  const hasProfile = initialProfile && initialProfile.childName;
 
-  const [childName, setChildName] = useState('');
-  const [isNeurodivergent, setIsNeurodivergent] = useState(null);
-  const [age, setAge] = useState(null);
+  // Passos: 0 (Nome) -> 1 (Perfil) -> 2 (Idade) -> 3 (Matérias) -> 4 (Tópicos Loop)
+  const [step, setStep] = useState(hasProfile ? 3 : 0);
+
+  const [childName, setChildName] = useState(hasProfile ? initialProfile.childName : '');
+  const [isNeurodivergent, setIsNeurodivergent] = useState(hasProfile ? initialProfile.isNeurodivergent : null);
+  const [age, setAge] = useState(hasProfile ? initialProfile.age : null);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   
   const [selectedTopics, setSelectedTopics] = useState({});
