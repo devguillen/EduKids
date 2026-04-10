@@ -1,15 +1,16 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { IAIProvider } from '../core/types';
+import { GoogleGenAI } from '@google/genai';
+import { IAIProvider, IChatMessage } from '../core/types';
 
 export class GeminiProvider implements IAIProvider {
-  private readonly genAI: GoogleGenerativeAI;
+  private readonly client: any;
   private readonly modelName: string;
 
-  constructor(apiKey: string, modelName: string = 'gemini-2.0-flash') { // Stable standard for 2026
+  constructor(apiKey: string, modelName: string = 'gemini-2.0-flash') {
     if (!apiKey) {
       throw new Error('[GeminiProvider] API Key is required. Verifique o seu .env');
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
+    // O novo SDK agrupa tudo em um Client centralizado
+    this.client = new GoogleGenAI({ apiKey });
     this.modelName = modelName;
   }
 
@@ -19,45 +20,43 @@ export class GeminiProvider implements IAIProvider {
     history: IChatMessage[]
   ): Promise<{ responseText: string; updatedHistory: IChatMessage[] }> {
     try {
-      const model = this.genAI.getGenerativeModel({
+      // No novo SDK, criamos a sessão com a config de sistema
+      const chat = this.client.chats.create({
         model: this.modelName,
-        systemInstruction,
-      }, { apiVersion: 'v1' });
-
-      // Inicializa o chat com o histórico recebido
-      const chat = model.startChat({
-        history,
-        generationConfig: {
+        config: {
+          systemInstruction,
+          responseMimeType: 'application/json',
           temperature: 0.7,
-          responseMimeType: "application/json",
         },
+        history, // O histórico injetado para restaurar estado
       });
 
       const result = await chat.sendMessage(prompt);
-      const response = await result.response;
+      const response = result.response;
       const responseText = response.text();
       
       if (!responseText) {
-        throw new Error('O modelo não retornou nenhum texto (Filtro de segurança).');
+        throw new Error('A IA não retornou conteúdo (Filtro de segurança).');
       }
 
-      // O SDK gerencia o histórico interno, mas para persistência no LocalStorage
-      // precisamos retornar o novo histórico para o domínio (NeuroAITutor)
-      const newHistory = await chat.getHistory();
+      // No novo SDK, o histórico é acessível após a mensagem
+      const updatedHistory = chat.history;
       
       return {
         responseText,
-        updatedHistory: newHistory as IChatMessage[],
+        updatedHistory: updatedHistory as IChatMessage[],
       };
       
     } catch (error: any) {
-      console.error('[GeminiProvider] Chat Session Error:', error);
+      console.error('[GeminiProvider Modern] Chat Error:', error);
       
-      if (error?.status === 429) throw new Error('Limite de requisições excedido.');
-      if (error?.status === 403 || error?.status === 401) throw new Error('API Key inválida.');
+      // Erros específicos de cota e autenticação
+      const status = error?.status || error?.response?.status;
+      if (status === 429) throw new Error('Limite de requisições excedido.');
+      if (status === 403 || status === 401) throw new Error('Chave de API inválida ou sem permissão.');
 
-      const errorMessage = error instanceof Error ? error.message : 'Unknown Gemini SDK Error';
-      throw new Error(`[Chat Generation Failed]: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido no SDK Moderno';
+      throw new Error(`[Modern AI Failure]: ${errorMessage}`);
     }
   }
 }
