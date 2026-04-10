@@ -1,47 +1,63 @@
 import { describe, it, expect, vi } from 'vitest';
 import { NeuroAITutor } from './NeuroAITutor';
-import { IAIProvider, ILearnerProfile } from './types';
+import { IAIProvider, IGameProfile, IGameLevel } from './types';
 
 describe('NeuroAITutor Core Validation', () => {
-  const mockProfile: Readonly<ILearnerProfile> = {
-    id: 'user_123',
-    focalInterest: 'Sistemas Planetários',
-    supportLevel: 1,
-    requiresLiteralLanguage: true,
+  const mockProfile: IGameProfile = {
+    age: 7,
+    subject: 'Matemática',
+    topic: 'Adição',
   };
 
-  it('Deve lançar erro na iniciação se o AI Provider for omitido (Dep. Inversion Breach)', () => {
+  it('Deve lançar erro na iniciação se o AI Provider for omitido', () => {
     // @ts-expect-error testando bypass de tipagem runtime
-    expect(() => new NeuroAITutor(null)).toThrow('[NeuroAITutor] ReferenceError');
+    expect(() => new NeuroAITutor(null)).toThrow('[NeuroAITutor] Provider não selecionado.');
   });
 
   it('Deve retornar erro graceful via ITutorResponse quando a requisição de rede do provedor falhar', async () => {
-    // Mocking falha de rede do IAIProvider
     const mockProviderObj: IAIProvider = {
-      generateResponse: vi.fn().mockRejectedValue(new Error('Network/API Timeout')),
+      generateJsonResponse: vi.fn().mockRejectedValue(new Error('Network/API Timeout')),
     };
 
     const tutor = new NeuroAITutor(mockProviderObj);
-    const result = await tutor.teachConcept('Como funciona a gravidade?', mockProfile);
+    const result = await tutor.generateMiniGame(mockProfile);
 
-    // Validação estrita do encapsulamento do erro (não deve dar throw no loop da UI principal)
     expect(result.success).toBe(false);
-    expect(result.content).toBeNull();
-    expect(result.error).toBe('Tivemos um problema técnico ao processar sua dúvida. Por favor, tente novamente.');
-    expect(mockProviderObj.generateResponse).toHaveBeenCalledTimes(1);
+    expect(result.gameLevel).toBeNull();
+    expect(result.error).toBe('Puxa! Nossas engrenagens travaram criando sua fase. Vamos tentar de novo?');
+    expect(mockProviderObj.generateJsonResponse).toHaveBeenCalledTimes(1);
   });
   
-  it('Deve processar dados com sucesso retornando os passos literais', async () => {
-    const mockResponse = '1. A gravidade puxa as coisas para o chão.\n2. É como o Sol puxando os planetas.';
+  it('Deve processar dados com sucesso retornando o nível do jogo', async () => {
+    const mockLevel: IGameLevel = {
+      question: 'Quanto é 2 + 2?',
+      options: ['3', '4', '5'],
+      correctAnswer: '4',
+      hint: 'Pense em seus dedos!'
+    };
+    const mockResponse = JSON.stringify(mockLevel);
+    
     const mockProviderObj: IAIProvider = {
-      generateResponse: vi.fn().mockResolvedValue(mockResponse),
+      generateJsonResponse: vi.fn().mockResolvedValue(mockResponse),
     };
 
     const tutor = new NeuroAITutor(mockProviderObj);
-    const result = await tutor.teachConcept('O que é gravidade?', mockProfile);
+    const result = await tutor.generateMiniGame(mockProfile);
 
     expect(result.success).toBe(true);
-    expect(result.content).toBe(mockResponse);
+    expect(result.gameLevel).toEqual(mockLevel);
     expect(result.error).toBeNull();
+  });
+
+  it('Deve falhar se o JSON retornado for inválido', async () => {
+    const mockProviderObj: IAIProvider = {
+      generateJsonResponse: vi.fn().mockResolvedValue('Invalid JSON content'),
+    };
+
+    const tutor = new NeuroAITutor(mockProviderObj);
+    const result = await tutor.generateMiniGame(mockProfile);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Puxa! Nossas engrenagens travaram');
   });
 });

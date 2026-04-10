@@ -26,18 +26,25 @@ export class NeuroAITutor {
       // Chamada para o Provider que vai devolver JSON Puro (Graças a responseMimeType)
       const rawJsonString = await this.aiProvider.generateJsonResponse(prompt, systemInstruction);
 
-      // Parseia o retorno que obrigatoriamente é um JSON graças ao Gemini
-      const parsedLevel: IGameLevel = JSON.parse(rawJsonString);
+      // Limpeza de possíveis artefatos (backticks) mesmo com responseMimeType
+      const cleanJson = rawJsonString.replace(/```json|```/g, '').trim();
 
-      if (!parsedLevel.question || !parsedLevel.options || !parsedLevel.correctAnswer) {
-          throw new Error('A IA não gerou todos os campos requeridos do IGameLevel.');
+      try {
+        const parsedLevel: IGameLevel = JSON.parse(cleanJson);
+        
+        if (!parsedLevel.question || !parsedLevel.options || !parsedLevel.correctAnswer) {
+            throw new Error('Campos obrigatórios ausentes no JSON da IA.');
+        }
+
+        return {
+          success: true,
+          gameLevel: parsedLevel,
+          error: null,
+        };
+      } catch (parseError) {
+        console.error('[NeuroAITutor] Fallback JSON Parse Error:', parseError, 'Raw:', cleanJson);
+        throw new Error('Falha catastrófica ao decodificar inteligência pedagógica.');
       }
-
-      return {
-        success: true,
-        gameLevel: parsedLevel,
-        error: null,
-      };
 
     } catch (error: unknown) {
       console.error(`[Domain Error - GameGenerator]`, error);

@@ -23,17 +23,31 @@ export class GeminiProvider implements IAIProvider {
       const result = await model.generateContent({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.7, // Criatividade sutil na geração do desafio
-          responseMimeType: "application/json", // Força Output Estruturado JSON!!
+          temperature: 0.7,
+          responseMimeType: "application/json",
         },
       });
 
-      const responseText = result.response.text();
-      if (!responseText) throw new Error('API retornou nulo');
+      const response = await result.response;
+      const responseText = response.text();
+      
+      if (!responseText) {
+        throw new Error('O modelo não retornou nenhum texto (possível filtro de segurança).');
+      }
       
       return responseText;
       
-    } catch (error: unknown) {
+    } catch (error: any) {
+      console.error('[GeminiProvider] API Error:', error);
+      
+      // Detecção de erros comuns de API (Cota, Chave Inválida)
+      if (error?.status === 429) {
+          throw new Error('Limite de requisições excedido. Aguarde um minuto.');
+      }
+      if (error?.status === 403 || error?.status === 401) {
+          throw new Error('API Key inválida ou sem permissão.');
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown Gemini SDK Error';
       throw new Error(`[Gemini Generation Failed]: ${errorMessage}`);
     }
