@@ -5,7 +5,7 @@ export class GeminiProvider implements IAIProvider {
   private readonly genAI: GoogleGenerativeAI;
   private readonly modelName: string;
 
-  constructor(apiKey: string, modelName: string = 'gemini-1.5-flash') { // flash is faster for UI apps
+  constructor(apiKey: string, modelName: string = 'gemini-3-flash') { // use requested next-gen model
     if (!apiKey) {
       throw new Error('[GeminiProvider] API Key is required. Verifique o seu .env');
     }

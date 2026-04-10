@@ -55,7 +55,6 @@ export default function App() {
     setAge(wizardData.age);
     setStudyQueue(queue);
     setCurrentQueueIndex(0);
-    setShowWizard(false);
 
     // Carrega o primeiro level
     if (queue.length > 0) {
@@ -67,10 +66,22 @@ export default function App() {
         topic: queue[0].topic
       };
 
-      // Inicializa a memória da IA com o perfil da criança
-      await neuroTutor.initializeSession(firstProfile);
+      try {
+        setIsLoading(true);
+        setErrorMsg('');
+        
+        // Inicializa a memória da IA com o perfil da criança
+        await neuroTutor.initializeSession(firstProfile);
 
-      await composeNextLevel(firstProfile);
+        // Sucesso! Esconde o Wizard e começa o jogo
+        setShowWizard(false);
+        await composeNextLevel(firstProfile);
+      } catch (err) {
+        console.error('[App] Initialization Error:', err);
+        setErrorMsg(`Não conseguimos conectar com o Professor IA: ${err.message}`);
+        setIsLoading(false);
+        // Não chamamos setShowWizard(false), mantendo o usuário no Wizard para ver o erro
+      }
     }
   };
 
@@ -131,6 +142,12 @@ export default function App() {
       </header>
       
       <main className="main-content">
+        {errorMsg && (
+          <div className="error-banner">
+            ⚠️ {errorMsg}
+          </div>
+        )}
+
         {showWizard ? (
           <Wizard onComplete={handleWizardComplete} />
         ) : (
