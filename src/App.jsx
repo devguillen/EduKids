@@ -10,6 +10,8 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const aiProvider = new GeminiProvider(apiKey);
 const neuroTutor = new NeuroAITutor(aiProvider);
 
+const STORAGE_KEY_USER = 'edukids_user_profile';
+
 export default function App() {
   const [highContrast, setHighContrast] = useState(false);
   const [largeText, setLargeText] = useState(false);
@@ -25,7 +27,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Atencionando DOM p/ CSS
+  // Persistência de preferências visuais
   useEffect(() => {
     const root = document.documentElement;
     if (highContrast) {
@@ -41,6 +43,32 @@ export default function App() {
     }
   }, [highContrast, largeText]);
 
+  // Restauração de Sessão do Usuário (F5)
+  useEffect(() => {
+    const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      setChildName(userData.childName);
+      setIsNeurodivergent(userData.isNeurodivergent);
+      setAge(userData.age);
+      setStudyQueue(userData.studyQueue);
+      setCurrentQueueIndex(userData.currentQueueIndex || 0);
+
+      // Se temos fila, carregamos o estado atual
+      if (userData.studyQueue?.length > 0) {
+        setShowWizard(false);
+        const index = userData.currentQueueIndex || 0;
+        composeNextLevel({
+          childName: userData.childName,
+          isNeurodivergent: userData.isNeurodivergent,
+          age: userData.age,
+          subject: userData.studyQueue[index].subject,
+          topic: userData.studyQueue[index].topic
+        });
+      }
+    }
+  }, []);
+
   const handleWizardComplete = async (wizardData) => {
     // Transforma o dicionário aninhado em uma fila plana sequencial
     const queue = [];
@@ -49,6 +77,15 @@ export default function App() {
           queue.push({ subject, topic });
        });
     });
+
+    // Persiste o perfil no LocalStorage
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
+      childName: wizardData.childName,
+      isNeurodivergent: wizardData.isNeurodivergent,
+      age: wizardData.age,
+      studyQueue: queue,
+      currentQueueIndex: 0
+    }));
 
     setChildName(wizardData.childName);
     setIsNeurodivergent(wizardData.isNeurodivergent);
@@ -112,6 +149,14 @@ export default function App() {
     const nextIndex = currentQueueIndex + 1;
     if (nextIndex < studyQueue.length) {
        setCurrentQueueIndex(nextIndex);
+       
+       // Atualiza a persistência com o novo índice
+       const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEY_USER) || '{}');
+       localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
+         ...savedUser,
+         currentQueueIndex: nextIndex
+       }));
+
        await composeNextLevel({
          childName,
          isNeurodivergent,

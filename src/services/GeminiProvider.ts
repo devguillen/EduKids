@@ -64,30 +64,45 @@ export class GeminiProvider implements IAIProvider {
           hint: "O Sol é uma estrela gigante que esmaga átomos!"
         };
 
-        // Adaptação dinâmica básica baseada na matéria detectada no prompt
-        const promptLower = prompt.toLowerCase();
-        if (promptLower.includes('geografia')) {
+        const p = prompt.toLowerCase();
+        
+        // Regex para ignorar acentos e ser mais flexível
+        const isMath = /matem[aá]tica|adi[cç][aã]o|soma|n[uú]meros/.test(p);
+        const isGeo = /geografia|planeta|mapa|oceano/.test(p);
+        const isSci = /ci[eê]ncias|corpo|natureza|animal/.test(p);
+        const isPort = /portugu[eê]s|gram[aá]tica|palavra|leitura/.test(p);
+
+        if (isMath) {
+          if (p.includes('adição') || p.includes('adicao')) {
+             mockResponse = {
+               question: "Quanto é 12 + 8?",
+               options: ["18", "20", "22", "25"],
+               correctAnswer: "20",
+               hint: "Dica: Tente somar 2 ao 8 primeiro para fazer um 10."
+             };
+          } else {
+             mockResponse = {
+               question: "Quanto é 5 x 5?",
+               options: ["10", "20", "25", "30"],
+               correctAnswer: "25",
+               hint: "Dica: É o mesmo que somar o 5 cinco vezes."
+             };
+          }
+        } else if (isGeo) {
           mockResponse = {
             question: "Qual o maior oceano do mundo?",
             options: ["Oceano Atlântico", "Oceano Pacífico", "Oceano Índico", "Oceano Glacial Arctico"],
             correctAnswer: "Oceano Pacífico",
             hint: "Dica: Fica entre a América e a Ásia."
           };
-        } else if (promptLower.includes('matemática')) {
-          mockResponse = {
-            question: "Quanto é 5 x 5?",
-            options: ["10", "20", "25", "30"],
-            correctAnswer: "25",
-            hint: "Dica: É o mesmo que somar o 5 cinco vezes."
-          };
-        } else if (promptLower.includes('ciências')) {
+        } else if (isSci) {
           mockResponse = {
             question: "Qual planeta é conhecido como o Planeta Vermelho?",
             options: ["Terra", "Marte", "Júpiter", "Saturno"],
             correctAnswer: "Marte",
             hint: "Dica: Tem esse nome por causa da cor da sua poeira ferrosa."
           };
-        } else if (promptLower.includes('português')) {
+        } else if (isPort) {
           mockResponse = {
             question: "Qual dessas palavras é um substantivo?",
             options: ["Correr", "Bonito", "Cachorro", "Rapidamente"],
