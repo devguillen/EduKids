@@ -20,11 +20,11 @@ export const GameUI = ({ levelData, onNextLevel }) => {
 
   if (victory) {
     return (
-      <div className="game-card victory-card">
+      <div className="victory-banner">
         <h1 style={{fontSize: '3em'}}>🎉</h1>
         <h2>Parabéns! Você acertou!</h2>
-        <p className="victory-text">A resposta era: <b>{levelData.correctAnswer}</b></p>
-        <button className="primary-btn pulse" onClick={() => {
+        <p>A resposta era: <b>{levelData.correctAnswer}</b></p>
+        <button className="btn-primary" onClick={() => {
           setVictory(false);
           setSelectedOption(null);
           setShowHint(false);
@@ -35,10 +35,10 @@ export const GameUI = ({ levelData, onNextLevel }) => {
   }
 
   return (
-    <div className="game-card">
-      <h2 className="game-question">{levelData.question}</h2>
+    <div className="game-play-area">
+      <h2 className="game-question-text">{levelData.question}</h2>
       
-      <div className="game-options">
+      <div className="game-answers-grid">
         {levelData.options.map((option, index) => {
           const isSelected = selectedOption === option;
           const isWrong = isSelected && option !== levelData.correctAnswer;
@@ -46,9 +46,9 @@ export const GameUI = ({ levelData, onNextLevel }) => {
           return (
             <button 
               key={index} 
-              className={`game-btn ${isWrong ? 'wrong-shake' : ''}`}
+              className={`answer-btn ${isWrong ? 'wrong-shake' : ''}`}
               onClick={() => handleChoice(option)}
-              disabled={isWrong} // Disable after clicking wrong
+              disabled={isWrong}
             >
               {option}
             </button>
@@ -57,7 +57,7 @@ export const GameUI = ({ levelData, onNextLevel }) => {
       </div>
 
       {showHint && (
-        <div className="hint-box">
+        <div className="hint-banner">
           💡 <b>Dica:</b> {levelData.hint}
         </div>
       )}

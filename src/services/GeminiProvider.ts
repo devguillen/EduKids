@@ -57,12 +57,44 @@ export class GeminiProvider implements IAIProvider {
       if (status === 429) {
         console.warn('⚠️ QUOTA EXCEDIDA. Ativando modo de pedagogia simulada para não travar o desenvolvimento.');
         
-        const mockResponse = {
+        let mockResponse = {
           question: "Como o sol brilha?",
           options: ["Com eletricidade", "Com fusão nuclear", "Com lanternas", "Com fogo"],
           correctAnswer: "Com fusão nuclear",
           hint: "O Sol é uma estrela gigante que esmaga átomos!"
         };
+
+        // Adaptação dinâmica básica baseada na matéria detectada no prompt
+        const promptLower = prompt.toLowerCase();
+        if (promptLower.includes('geografia')) {
+          mockResponse = {
+            question: "Qual o maior oceano do mundo?",
+            options: ["Oceano Atlântico", "Oceano Pacífico", "Oceano Índico", "Oceano Glacial Arctico"],
+            correctAnswer: "Oceano Pacífico",
+            hint: "Dica: Fica entre a América e a Ásia."
+          };
+        } else if (promptLower.includes('matemática')) {
+          mockResponse = {
+            question: "Quanto é 5 x 5?",
+            options: ["10", "20", "25", "30"],
+            correctAnswer: "25",
+            hint: "Dica: É o mesmo que somar o 5 cinco vezes."
+          };
+        } else if (promptLower.includes('ciências')) {
+          mockResponse = {
+            question: "Qual planeta é conhecido como o Planeta Vermelho?",
+            options: ["Terra", "Marte", "Júpiter", "Saturno"],
+            correctAnswer: "Marte",
+            hint: "Dica: Tem esse nome por causa da cor da sua poeira ferrosa."
+          };
+        } else if (promptLower.includes('português')) {
+          mockResponse = {
+            question: "Qual dessas palavras é um substantivo?",
+            options: ["Correr", "Bonito", "Cachorro", "Rapidamente"],
+            correctAnswer: "Cachorro",
+            hint: "Dica: Substantivos dão nome aos seres e objetos."
+          };
+        }
 
         return {
           responseText: JSON.stringify(mockResponse),
