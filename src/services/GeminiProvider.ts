@@ -5,7 +5,7 @@ export class GeminiProvider implements IAIProvider {
   private readonly genAI: GoogleGenerativeAI;
   private readonly modelName: string;
 
-  constructor(apiKey: string, modelName: string = 'gemini-3-flash') { // use requested next-gen model
+  constructor(apiKey: string, modelName: string = 'gemini-2.0-flash') { // Stable standard for 2026
     if (!apiKey) {
       throw new Error('[GeminiProvider] API Key is required. Verifique o seu .env');
     }
@@ -22,7 +22,7 @@ export class GeminiProvider implements IAIProvider {
       const model = this.genAI.getGenerativeModel({
         model: this.modelName,
         systemInstruction,
-      });
+      }, { apiVersion: 'v1' });
 
       // Inicializa o chat com o histórico recebido
       const chat = model.startChat({
