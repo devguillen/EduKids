@@ -26,6 +26,10 @@ export default function App() {
   const [levelData, setLevelData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  
+  // Stats do Duolingo
+  const [stats, setStats] = useState({ correct: 0, wrong: 0, total: 0 });
+  const [showResults, setShowResults] = useState(false);
 
   // Persistência de preferências visuais
   useEffect(() => {
@@ -53,6 +57,7 @@ export default function App() {
       setAge(userData.age);
       setStudyQueue(userData.studyQueue);
       setCurrentQueueIndex(userData.currentQueueIndex || 0);
+      setStats(userData.stats || { correct: 0, wrong: 0, total: 0 });
 
       // Se temos fila, carregamos o estado atual
       if (userData.studyQueue?.length > 0) {
@@ -84,7 +89,8 @@ export default function App() {
       isNeurodivergent: wizardData.isNeurodivergent,
       age: wizardData.age,
       studyQueue: queue,
-      currentQueueIndex: 0
+      currentQueueIndex: 0,
+      stats: { correct: 0, wrong: 0, total: 0 }
     }));
 
     setChildName(wizardData.childName);
@@ -92,6 +98,8 @@ export default function App() {
     setAge(wizardData.age);
     setStudyQueue(queue);
     setCurrentQueueIndex(0);
+    setStats({ correct: 0, wrong: 0, total: 0 });
+    setShowResults(false);
 
     // Carrega o primeiro level
     if (queue.length > 0) {
@@ -154,7 +162,8 @@ export default function App() {
        const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEY_USER) || '{}');
        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
          ...savedUser,
-         currentQueueIndex: nextIndex
+         currentQueueIndex: nextIndex,
+         stats: stats // Salva as stats atuais no refresh
        }));
 
        await composeNextLevel({
@@ -165,19 +174,41 @@ export default function App() {
          topic: studyQueue[nextIndex].topic
        });
     } else {
-       // Loop do jogo acabou, se ele selecionou só 1 tópico de 1 matéria (ou vários e acabou).
-       // Volta The Wizard ou mostra tela final
-       alert('Você completou todos os tópicos que selecionou! 🎉');
-       setShowWizard(true);
+       // Loop do jogo acabou
+       setShowResults(true);
     }
+  };
+
+  const updateStats = (isCorrect) => {
+    const newStats = {
+      ...stats,
+      total: stats.total + 1,
+      correct: isCorrect ? stats.correct + 1 : stats.correct,
+      wrong: isCorrect ? stats.wrong : stats.wrong + 1
+    };
+    setStats(newStats);
+    
+    // Persiste em tempo real
+    const savedUser = JSON.parse(localStorage.getItem(STORAGE_KEY_USER) || '{}');
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify({
+      ...savedUser,
+      stats: newStats
+    }));
+  };
+
+  const handleStopSession = () => {
+    setShowResults(true);
   };
 
   return (
     <div className="app-wrapper">
       <header className="top-navbar">
-        <h1 className="logo-title" onClick={() => setShowWizard(true)} style={{cursor:'pointer'}}>
+        <h1 className="logo-title" onClick={() => !showWizard && setShowResults(true)} style={{cursor:'pointer'}}>
           EduKids AI
         </h1>
+        <div className="stats-indicator">
+          ⭐ {stats.correct} Acertos
+        </div>
         <SensoryControls 
           onToggleContrast={() => setHighContrast(!highContrast)}
           onToggleTextSize={() => setLargeText(!largeText)}
@@ -219,11 +250,32 @@ export default function App() {
               </div>
             )}
 
-            {!isLoading && !errorMsg && levelData && (
+            {!isLoading && !errorMsg && levelData && !showResults && (
                <GameUI 
                  levelData={levelData} 
                  onNextLevel={handleLevelCompleted} 
+                 onAnswer={updateStats}
+                 onStop={handleStopSession}
                />
+            )}
+
+            {showResults && (
+              <div className="victory-banner">
+                 <h2>Resumo da sua Jornada! 🌟</h2>
+                 <div style={{display: 'flex', gap: '20px', justifyContent: 'center', margin: '20px 0'}}>
+                    <div className="stat-card"><b>{stats.total}</b> Questões</div>
+                    <div className="stat-card" style={{color: 'green'}}><b>{stats.correct}</b> Acertos</div>
+                    <div className="stat-card" style={{color: 'red'}}><b>{stats.wrong}</b> Erros</div>
+                 </div>
+                 <p>Parabéns por se dedicar aos estudos, {childName}!</p>
+                 <div style={{display: 'flex', gap: '10px', justifyContent: 'center'}}>
+                   <button className="btn-primary" onClick={() => setShowResults(false)}>Continuar Estudos</button>
+                   <button className="btn-primary" style={{backgroundColor: '#ff5c5c'}} onClick={() => {
+                     localStorage.removeItem(STORAGE_KEY_USER);
+                     window.location.reload();
+                   }}>Novo Perfil</button>
+                 </div>
+              </div>
             )}
           </div>
         )}

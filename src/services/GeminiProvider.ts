@@ -68,8 +68,8 @@ export class GeminiProvider implements IAIProvider {
         
         // Regex para ignorar acentos e ser mais flexível
         const isMath = /matem[aá]tica|adi[cç][aã]o|soma|n[uú]meros/.test(p);
-        const isGeo = /geografia|planeta|mapa|oceano/.test(p);
-        const isSci = /ci[eê]ncias|corpo|natureza|animal/.test(p);
+        const isGeo = /geografia|planeta|mapa|oceano|universo|espa[cç]o/.test(p);
+        const isSci = /ci[eê]ncias|corpo|natureza|animal|biologia/.test(p);
         const isPort = /portugu[eê]s|gram[aá]tica|palavra|leitura/.test(p);
 
         if (isMath) {
@@ -89,19 +89,37 @@ export class GeminiProvider implements IAIProvider {
              };
           }
         } else if (isGeo) {
-          mockResponse = {
-            question: "Qual o maior oceano do mundo?",
-            options: ["Oceano Atlântico", "Oceano Pacífico", "Oceano Índico", "Oceano Glacial Arctico"],
-            correctAnswer: "Oceano Pacífico",
-            hint: "Dica: Fica entre a América e a Ásia."
-          };
+          if (p.includes('universo') || p.includes('espaço') || p.includes('espaco')) {
+            mockResponse = {
+              question: "Qual o maior planeta do nosso Sistema Solar?",
+              options: ["Terra", "Marte", "Júpiter", "Saturno"],
+              correctAnswer: "Júpiter",
+              hint: "Dica: É um gigante feito de gás!"
+            };
+          } else {
+            mockResponse = {
+              question: "Qual o maior oceano do mundo?",
+              options: ["Oceano Atlântico", "Oceano Pacífico", "Oceano Índico", "Oceano Glacial Arctico"],
+              correctAnswer: "Oceano Pacífico",
+              hint: "Dica: Fica entre a América e a Ásia."
+            };
+          }
         } else if (isSci) {
-          mockResponse = {
-            question: "Qual planeta é conhecido como o Planeta Vermelho?",
-            options: ["Terra", "Marte", "Júpiter", "Saturno"],
-            correctAnswer: "Marte",
-            hint: "Dica: Tem esse nome por causa da cor da sua poeira ferrosa."
-          };
+          if (p.includes('biologia')) {
+             mockResponse = {
+               question: "O que as plantas precisam para fazer fotossíntese?",
+               options: ["Luz do Sol e Água", "Apenas Terra", "Sombra", "Suco de Laranja"],
+               correctAnswer: "Luz do Sol e Água",
+               hint: "Dica: Elas adoram beber água e tomar sol!"
+             };
+          } else {
+             mockResponse = {
+               question: "Qual planeta é conhecido como o Planeta Vermelho?",
+               options: ["Terra", "Marte", "Júpiter", "Saturno"],
+               correctAnswer: "Marte",
+               hint: "Dica: Tem esse nome por causa da cor da sua poeira ferrosa."
+             };
+          }
         } else if (isPort) {
           mockResponse = {
             question: "Qual dessas palavras é um substantivo?",

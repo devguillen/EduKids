@@ -1,16 +1,26 @@
 import { useState } from 'react';
 
-export const GameUI = ({ levelData, onNextLevel }) => {
+export const GameUI = ({ levelData, onNextLevel, onAnswer, onStop }) => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showHint, setShowHint] = useState(false);
   const [victory, setVictory] = useState(false);
+  const [hasAnswered, setHasAnswered] = useState(false);
 
   if (!levelData) return null;
 
   const handleChoice = (option) => {
-    setSelectedOption(option);
+    if (hasAnswered && option !== levelData.correctAnswer) return; // Prevent multiple wrong counts for same question
     
-    if (option === levelData.correctAnswer) {
+    setSelectedOption(option);
+    const isCorrect = option === levelData.correctAnswer;
+    
+    // Reporta para o App (stats)
+    if (!hasAnswered) {
+      onAnswer(isCorrect);
+      setHasAnswered(true);
+    }
+
+    if (isCorrect) {
       setVictory(true);
       setShowHint(false);
     } else {
@@ -28,6 +38,7 @@ export const GameUI = ({ levelData, onNextLevel }) => {
           setVictory(false);
           setSelectedOption(null);
           setShowHint(false);
+          setHasAnswered(false);
           onNextLevel();
         }}>Próximo Desafio ➡️</button>
       </div>
@@ -56,11 +67,21 @@ export const GameUI = ({ levelData, onNextLevel }) => {
         })}
       </div>
 
-      {showHint && (
-        <div className="hint-banner">
-          💡 <b>Dica:</b> {levelData.hint}
-        </div>
-      )}
+      <div style={{marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center'}}>
+        {showHint && (
+          <div className="hint-banner">
+            💡 <b>Dica:</b> {levelData.hint}
+          </div>
+        )}
+
+        <button 
+          className="btn-primary" 
+          style={{backgroundColor: '#ff5c5c', padding: '10px 20px', fontSize: '0.9em'}}
+          onClick={onStop}
+        >
+          🛑 Parar Estudo
+        </button>
+      </div>
     </div>
   );
 };

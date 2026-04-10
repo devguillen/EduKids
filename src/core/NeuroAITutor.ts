@@ -38,7 +38,7 @@ export class NeuroAITutor {
   public async generateMiniGame(profile: IGameProfile): Promise<ITutorResponse> {
     try {
       const systemInstruction = buildGameSystemInstruction(profile);
-      const prompt = `Gere UMA nova pergunta lúdica de nível de dificuldade adequado para o tópico "${profile.topic}".`;
+      const prompt = `Matéria: ${profile.subject}. Gere UMA nova pergunta lúdica de nível de dificuldade adequado para o tópico "${profile.topic}".`;
 
       const { responseText, updatedHistory } = await this.aiProvider.sendMessage(
         prompt, 
