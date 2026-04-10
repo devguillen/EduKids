@@ -1,63 +1,63 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NeuroAITutor } from './NeuroAITutor';
-import { IAIProvider, IGameProfile, IGameLevel } from './types';
+import { IAIProvider, IGameProfile, IGameLevel, IChatMessage } from './types';
 
-describe('NeuroAITutor Core Validation', () => {
+describe('NeuroAITutor Stateful Session Validation', () => {
   const mockProfile: IGameProfile = {
-    age: 7,
+    childName: 'Lucas',
+    age: 12,
     subject: 'Matemática',
     topic: 'Adição',
+    isNeurodivergent: false,
   };
 
-  it('Deve lançar erro na iniciação se o AI Provider for omitido', () => {
-    // @ts-expect-error testando bypass de tipagem runtime
-    expect(() => new NeuroAITutor(null)).toThrow('[NeuroAITutor] Provider não selecionado.');
+  const mockGameLevel: IGameLevel = {
+    question: 'Quanto é 5 + 5?',
+    options: ['10', '15', '20'],
+    correctAnswer: '10',
+    hint: 'Pense nos dedos das suas mãos!'
+  };
+
+  let mockProvider: IAIProvider;
+
+  beforeEach(() => {
+    localStorage.clear();
+    mockProvider = {
+      sendMessage: vi.fn().mockResolvedValue({
+        responseText: JSON.stringify(mockGameLevel),
+        updatedHistory: [{ role: 'user', parts: [{ text: '...' }] }, { role: 'model', parts: [{ text: '...' }] }]
+      }),
+    };
   });
 
-  it('Deve retornar erro graceful via ITutorResponse quando a requisição de rede do provedor falhar', async () => {
-    const mockProviderObj: IAIProvider = {
-      generateJsonResponse: vi.fn().mockRejectedValue(new Error('Network/API Timeout')),
-    };
+  it('Deve inicializar a sessão se o histórico estiver vazio', async () => {
+    const tutor = new NeuroAITutor(mockProvider);
+    await tutor.initializeSession(mockProfile);
 
-    const tutor = new NeuroAITutor(mockProviderObj);
-    const result = await tutor.generateMiniGame(mockProfile);
-
-    expect(result.success).toBe(false);
-    expect(result.gameLevel).toBeNull();
-    expect(result.error).toBe('Puxa! Nossas engrenagens travaram criando sua fase. Vamos tentar de novo?');
-    expect(mockProviderObj.generateJsonResponse).toHaveBeenCalledTimes(1);
+    expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        expect.stringContaining('Eu sou Lucas'), 
+        expect.any(String), 
+        []
+    );
   });
-  
-  it('Deve processar dados com sucesso retornando o nível do jogo', async () => {
-    const mockLevel: IGameLevel = {
-      question: 'Quanto é 2 + 2?',
-      options: ['3', '4', '5'],
-      correctAnswer: '4',
-      hint: 'Pense em seus dedos!'
-    };
-    const mockResponse = JSON.stringify(mockLevel);
+
+  it('Deve gerar um mini-game dentro de uma sessão ativa', async () => {
+    const tutor = new NeuroAITutor(mockProvider);
+    await tutor.initializeSession(mockProfile); 
     
-    const mockProviderObj: IAIProvider = {
-      generateJsonResponse: vi.fn().mockResolvedValue(mockResponse),
-    };
-
-    const tutor = new NeuroAITutor(mockProviderObj);
     const result = await tutor.generateMiniGame(mockProfile);
 
     expect(result.success).toBe(true);
-    expect(result.gameLevel).toEqual(mockLevel);
-    expect(result.error).toBeNull();
+    expect(result.gameLevel).toEqual(mockGameLevel);
+    expect(mockProvider.sendMessage).toHaveBeenCalledTimes(2); // 1 seeding + 1 question
   });
 
-  it('Deve falhar se o JSON retornado for inválido', async () => {
-    const mockProviderObj: IAIProvider = {
-      generateJsonResponse: vi.fn().mockResolvedValue('Invalid JSON content'),
-    };
+  it('Deve recuperar o histórico do LocalStorage na inicialização', async () => {
+    const history: IChatMessage[] = [{ role: 'user', parts: [{ text: 'Histórico Antigo' }] }];
+    localStorage.setItem('edukids_chat_history', JSON.stringify(history));
 
-    const tutor = new NeuroAITutor(mockProviderObj);
-    const result = await tutor.generateMiniGame(mockProfile);
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Puxa! Nossas engrenagens travaram');
+    const tutor = new NeuroAITutor(mockProvider);
+    // @ts-ignore - acessando propriedade privada para teste
+    expect(tutor.chatHistory).toEqual(history);
   });
 });

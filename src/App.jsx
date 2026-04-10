@@ -18,6 +18,7 @@ export default function App() {
   const [childName, setChildName] = useState('');
   const [isNeurodivergent, setIsNeurodivergent] = useState(false);
   const [age, setAge] = useState(null);
+  const [studyQueue, setStudyQueue] = useState([]);
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
 
   const [levelData, setLevelData] = useState(null);
@@ -58,13 +59,18 @@ export default function App() {
 
     // Carrega o primeiro level
     if (queue.length > 0) {
-      await composeNextLevel({
+      const firstProfile = {
         childName: wizardData.childName,
         isNeurodivergent: wizardData.isNeurodivergent,
         age: wizardData.age,
         subject: queue[0].subject,
         topic: queue[0].topic
-      });
+      };
+
+      // Inicializa a memória da IA com o perfil da criança
+      await neuroTutor.initializeSession(firstProfile);
+
+      await composeNextLevel(firstProfile);
     }
   };
 
@@ -81,7 +87,7 @@ export default function App() {
       setLevelData({
         ...result.gameLevel,
         options: shuffledOptions,
-        subjectContext: queueItem.subject
+        subjectContext: profile.subject
       });
     } else {
       setErrorMsg(result.error || 'Erro ao comunicar com a IA');

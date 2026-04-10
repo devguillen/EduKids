@@ -13,8 +13,16 @@ export interface IGameProfile {
   isNeurodivergent: boolean;
 }
 
+export interface IChatMessage {
+  role: 'user' | 'model';
+  parts: { text: string }[];
+}
+
 export interface IAIProvider {
-  generateJsonResponse(prompt: string, systemInstruction: string): Promise<string>;
+  sendMessage(prompt: string, systemInstruction: string, history: IChatMessage[]): Promise<{
+    responseText: string;
+    updatedHistory: IChatMessage[];
+  }>;
 }
 
 export interface ITutorResponse {

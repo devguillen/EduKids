@@ -13,43 +13,51 @@ export class GeminiProvider implements IAIProvider {
     this.modelName = modelName;
   }
 
-  public async generateJsonResponse(prompt: string, systemInstruction: string): Promise<string> {
+  public async sendMessage(
+    prompt: string, 
+    systemInstruction: string, 
+    history: IChatMessage[]
+  ): Promise<{ responseText: string; updatedHistory: IChatMessage[] }> {
     try {
       const model = this.genAI.getGenerativeModel({
         model: this.modelName,
-        systemInstruction: systemInstruction,
+        systemInstruction,
       });
 
-      const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      // Inicializa o chat com o histórico recebido
+      const chat = model.startChat({
+        history,
         generationConfig: {
           temperature: 0.7,
           responseMimeType: "application/json",
         },
       });
 
+      const result = await chat.sendMessage(prompt);
       const response = await result.response;
       const responseText = response.text();
       
       if (!responseText) {
-        throw new Error('O modelo não retornou nenhum texto (possível filtro de segurança).');
-      }
-      
-      return responseText;
-      
-    } catch (error: any) {
-      console.error('[GeminiProvider] API Error:', error);
-      
-      // Detecção de erros comuns de API (Cota, Chave Inválida)
-      if (error?.status === 429) {
-          throw new Error('Limite de requisições excedido. Aguarde um minuto.');
-      }
-      if (error?.status === 403 || error?.status === 401) {
-          throw new Error('API Key inválida ou sem permissão.');
+        throw new Error('O modelo não retornou nenhum texto (Filtro de segurança).');
       }
 
+      // O SDK gerencia o histórico interno, mas para persistência no LocalStorage
+      // precisamos retornar o novo histórico para o domínio (NeuroAITutor)
+      const newHistory = await chat.getHistory();
+      
+      return {
+        responseText,
+        updatedHistory: newHistory as IChatMessage[],
+      };
+      
+    } catch (error: any) {
+      console.error('[GeminiProvider] Chat Session Error:', error);
+      
+      if (error?.status === 429) throw new Error('Limite de requisições excedido.');
+      if (error?.status === 403 || error?.status === 401) throw new Error('API Key inválida.');
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown Gemini SDK Error';
-      throw new Error(`[Gemini Generation Failed]: ${errorMessage}`);
+      throw new Error(`[Chat Generation Failed]: ${errorMessage}`);
     }
   }
 }
