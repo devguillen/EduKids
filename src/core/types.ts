@@ -6,9 +6,11 @@ export interface IGameLevel {
 }
 
 export interface IGameProfile {
+  childName: string;
   age: number;
   subject: string;
   topic: string;
+  isNeurodivergent: boolean;
 }
 
 export interface IAIProvider {

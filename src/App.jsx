@@ -15,11 +15,9 @@ export default function App() {
   const [largeText, setLargeText] = useState(false);
   
   const [showWizard, setShowWizard] = useState(true);
+  const [childName, setChildName] = useState('');
+  const [isNeurodivergent, setIsNeurodivergent] = useState(false);
   const [age, setAge] = useState(null);
-  
-  // Array linearizado do que precisa ser estudado. 
-  // Ex: [ {subject: 'Math', topic: 'Adição'}, {subject: 'Português', topic: 'Vírgula'} ]
-  const [studyQueue, setStudyQueue] = useState([]);
   const [currentQueueIndex, setCurrentQueueIndex] = useState(0);
 
   const [levelData, setLevelData] = useState(null);
@@ -51,6 +49,8 @@ export default function App() {
        });
     });
 
+    setChildName(wizardData.childName);
+    setIsNeurodivergent(wizardData.isNeurodivergent);
     setAge(wizardData.age);
     setStudyQueue(queue);
     setCurrentQueueIndex(0);
@@ -58,20 +58,22 @@ export default function App() {
 
     // Carrega o primeiro level
     if (queue.length > 0) {
-      await composeNextLevel(wizardData.age, queue[0]);
+      await composeNextLevel({
+        childName: wizardData.childName,
+        isNeurodivergent: wizardData.isNeurodivergent,
+        age: wizardData.age,
+        subject: queue[0].subject,
+        topic: queue[0].topic
+      });
     }
   };
 
-  const composeNextLevel = async (studentAge, queueItem) => {
+  const composeNextLevel = async (profile) => {
     setIsLoading(true);
     setErrorMsg('');
     setLevelData(null);
 
-    const result = await neuroTutor.generateMiniGame({
-      age: studentAge,
-      subject: queueItem.subject,
-      topic: queueItem.topic
-    });
+    const result = await neuroTutor.generateMiniGame(profile);
 
     if (result.success && result.gameLevel) {
       // Embaralha as respostas para n viciar
@@ -93,7 +95,13 @@ export default function App() {
     const nextIndex = currentQueueIndex + 1;
     if (nextIndex < studyQueue.length) {
        setCurrentQueueIndex(nextIndex);
-       await composeNextLevel(age, studyQueue[nextIndex]);
+       await composeNextLevel({
+         childName,
+         isNeurodivergent,
+         age,
+         subject: studyQueue[nextIndex].subject,
+         topic: studyQueue[nextIndex].topic
+       });
     } else {
        // Loop do jogo acabou, se ele selecionou só 1 tópico de 1 matéria (ou vários e acabou).
        // Volta The Wizard ou mostra tela final
@@ -131,7 +139,13 @@ export default function App() {
             {errorMsg && !isLoading && (
               <div style={{textAlign: 'center', marginTop: '50px'}}>
                 <h2 style={{color: 'red', marginBottom: '20px'}}>Puxa! {errorMsg}</h2>
-                <button className="btn-primary" onClick={() => composeNextLevel(age, studyQueue[currentQueueIndex])}>
+                <button className="btn-primary" onClick={() => composeNextLevel({
+                  childName, 
+                  isNeurodivergent, 
+                  age, 
+                  subject: studyQueue[currentQueueIndex].subject, 
+                  topic: studyQueue[currentQueueIndex].topic
+                })}>
                   Tentar novamente
                 </button>
               </div>

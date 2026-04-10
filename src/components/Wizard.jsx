@@ -10,13 +10,14 @@ const TOPICOS_POR_MATERIA = {
 };
 
 export const Wizard = ({ onComplete }) => {
-  // Passos: 0 (Idade) -> 1 (Matérias) -> 2 (Tópicos Loop)
+  // Passos: 0 (Nome) -> 1 (Perfil) -> 2 (Idade) -> 3 (Matérias) -> 4 (Tópicos Loop)
   const [step, setStep] = useState(0);
 
+  const [childName, setChildName] = useState('');
+  const [isNeurodivergent, setIsNeurodivergent] = useState(null);
   const [age, setAge] = useState(null);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   
-  // Ex: { 'Matemática': ['Adição', 'Subtração'], 'Ciências': ['Animais'] }
   const [selectedTopics, setSelectedTopics] = useState({});
   const [currentSubjectIndexForTopicSelection, setCurrentSubjectIndexForTopicSelection] = useState(0);
 
@@ -41,23 +42,80 @@ export const Wizard = ({ onComplete }) => {
 
   const advanceTopicsStep = () => {
     const currentSubject = selectedSubjects[currentSubjectIndexForTopicSelection];
-    // Se não marcou nada nesta matéria específica, ignora o warning por enquanto e avança
-    // Mas o ideal é bloquear.
     const chosenTopics = selectedTopics[currentSubject] || [];
-    if (chosenTopics.length === 0) return; // Disables the button 
+    if (chosenTopics.length === 0) return; 
 
     if (currentSubjectIndexForTopicSelection + 1 < selectedSubjects.length) {
       setCurrentSubjectIndexForTopicSelection(currentSubjectIndexForTopicSelection + 1);
     } else {
-      // Finished all! 
       onComplete({
+        childName,
+        isNeurodivergent,
         age,
-        subjectsAndTopics: selectedTopics // Dict of selected content
+        subjectsAndTopics: selectedTopics 
       });
     }
   };
 
+  // Passo 0: Nome
   if (step === 0) {
+    return (
+      <div className="wizard-container">
+        <h2 className="wizard-title">Olá! Qual é o seu nome?</h2>
+        <div style={{display:'flex', justifyContent:'center', margin:'20px 0'}}>
+           <input 
+             type="text" 
+             className="input-text-large"
+             placeholder="Digite seu nome aqui..." 
+             value={childName}
+             onChange={(e) => setChildName(e.target.value)}
+             autoFocus
+           />
+        </div>
+        <div className="action-line">
+          <button className="btn-primary" disabled={!childName.trim()} onClick={() => setStep(1)}>
+            AVANÇAR
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Passo 1: Perfil Neurodivergente
+  if (step === 1) {
+    return (
+      <div className="wizard-container">
+        <h2 className="wizard-title">Como você prefere aprender, {childName}?</h2>
+        <p style={{color: 'var(--text-muted)'}}>Isso nos ajuda a criar desafios perfeitos para você.</p>
+        <div className="options-grid">
+           <button 
+             className="option-card" 
+             data-selected={isNeurodivergent === false}
+             onClick={() => setIsNeurodivergent(false)}
+           >
+             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>Padrão / Desafios Variados</span>
+             <p style={{fontSize: '0.9rem', marginTop: '5px'}}>Gosto de surpresas e histórias lúdicas.</p>
+           </button>
+           <button 
+             className="option-card" 
+             data-selected={isNeurodivergent === true}
+             onClick={() => setIsNeurodivergent(true)}
+           >
+             <span style={{fontSize: '1.2rem', fontWeight: 'bold'}}>Focado / Literal (Neurodivergente)</span>
+             <p style={{fontSize: '0.9rem', marginTop: '5px'}}>Prefiro clareza, rotina e instruções diretas.</p>
+           </button>
+        </div>
+        <div className="action-line">
+          <button className="btn-primary" disabled={isNeurodivergent === null} onClick={() => setStep(2)}>
+            AVANÇAR
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Passo 2: Idade
+  if (step === 2) {
     return (
       <div className="wizard-container">
         <h2 className="wizard-title">Quantos anos você tem?</h2>
@@ -74,7 +132,7 @@ export const Wizard = ({ onComplete }) => {
           ))}
         </div>
         <div className="action-line">
-          <button className="btn-primary" disabled={!age} onClick={() => setStep(1)}>
+          <button className="btn-primary" disabled={!age} onClick={() => setStep(3)}>
             AVANÇAR
           </button>
         </div>
@@ -82,10 +140,11 @@ export const Wizard = ({ onComplete }) => {
     );
   }
 
-  if (step === 1) {
+  // Passo 3: Matérias
+  if (step === 3) {
     return (
       <div className="wizard-container">
-        <h2 className="wizard-title">O que vamos estudar hoje?</h2>
+        <h2 className="wizard-title">O que vamos estudar hoje, {childName}?</h2>
         <p style={{color: 'var(--text-muted)'}}>Pode escolher mais de um!</p>
         <div className="options-grid">
           {MATERIAS_DISPONIVEIS.map(mat => {
@@ -93,7 +152,7 @@ export const Wizard = ({ onComplete }) => {
             return (
               <button 
                 key={mat} 
-                className="option-card"
+                className="option-card" 
                 data-selected={isSelected}
                 onClick={() => toggleSubject(mat)}
               >
@@ -103,7 +162,7 @@ export const Wizard = ({ onComplete }) => {
           })}
         </div>
         <div className="action-line">
-          <button className="btn-primary" disabled={selectedSubjects.length === 0} onClick={() => setStep(2)}>
+          <button className="btn-primary" disabled={selectedSubjects.length === 0} onClick={() => setStep(4)}>
             AVANÇAR
           </button>
         </div>
@@ -111,7 +170,8 @@ export const Wizard = ({ onComplete }) => {
     );
   }
 
-  if (step === 2) {
+  // Passo 4: Tópicos
+  if (step === 4) {
     const subject = selectedSubjects[currentSubjectIndexForTopicSelection];
     const availableTopics = TOPICOS_POR_MATERIA[subject] || [];
     const chosenTopics = selectedTopics[subject] || [];
