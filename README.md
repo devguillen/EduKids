@@ -1,16 +1,66 @@
-# React + Vite
+# EduKids AI 🧩
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+EduKids AI is a premium, gamified educational platform designed for children aged 4-12. Built with **React 19**, **Vite**, and **Google Gemini AI**, it offers a personalized learning experience that adapts to the child's age, interests, and neurodiversity profile.
 
-Currently, two official plugins are available:
+## 🌟 Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Personalized Onboarding**: A child-friendly wizard that captures name, age, subjects, and topics.
+- **Neurodiverse Adaptability**: Specialized pedagogical logic for both neurotypical and neurodivergent children (ASD, ADHD, etc.).
+- **AI-Powered Learning**: Dynamic mini-game generation using Gemini 1.5 Flash.
+- **Calm Tech UI**: Accessible design with high contrast, large text support, and low sensory noise.
+- **Safety First**: Secure environment management and pedagogical oversight.
 
-## React Compiler
+## 🚀 Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Framework**: React 19 + Vite
+- **AI Integration**: Google Generative AI (Gemini SDK)
+- **Styling**: Vanilla CSS with Dynamic Design Tokens
+- **Testing**: Vitest + React Testing Library
+- **Platform**: Tier 1 Standards (Clean Architecture, SOLID, Hexagonal Architecture patterns)
 
-## Expanding the ESLint configuration
+## 🛠️ Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+- Node.js (v18+)
+- A Gemini API Key from [Google AI Studio](https://aistudio.google.com/)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/devguillen/EduKids.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Add your `VITE_GEMINI_API_KEY`
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## 🧪 Testing
+
+Run unit and integration tests:
+```bash
+npm test
+```
+
+## 📜 Repository Guidelines
+
+- **Clean Code**: Follow SOLID and Clean Architecture principles.
+- **Security**: Never commit `.env` files. Mask sensitive information in logs.
+- **Workflow**: Use standard Git flow. Commits should be descriptive.
+
+## 🤝 Contributing
+
+This project follows Staff Engineer protocols for technical excellence. Please ensure all contributions include tests and proper documentation.
+
+---
+
+*Built with ❤️ for inclusive education.*
