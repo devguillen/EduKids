@@ -14,9 +14,9 @@ describe('SensoryControls', () => {
         largeText={false} 
       />
     );
-    fireEvent.click(screen.getByText('Alto Contraste'));
+    fireEvent.click(screen.getByText(/Alto Contraste/));
     expect(onContrast).toHaveBeenCalled();
-    fireEvent.click(screen.getByText('Texto Grande'));
+    fireEvent.click(screen.getByText(/Texto Grande/));
     expect(onText).toHaveBeenCalled();
   });
 });
